@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/http/pprof"
+	_ "net/http/pprof"
 	"net/url"
 	"os"
 	"time"
@@ -113,6 +115,11 @@ func main() {
 	}
 
 	r := mux.NewRouter()
+	r.HandleFunc("/debug/pprof/", pprof.Index)
+	r.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	r.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	r.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+
 	r.HandleFunc("/initialize", getInitializeHandler)
 	r.HandleFunc("/room/", getRoomHandler)
 	r.HandleFunc("/room/{room_name}", getRoomHandler)
