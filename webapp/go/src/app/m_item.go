@@ -9,7 +9,7 @@ var (
 	// M_ITEM_ARRAY []mItem
 	M_ITEM_DICT map[int]mItem
 
-	POWER_DICT map[string]*big.Int
+	POWER_DICT = make(map[string]*big.Int)
 )
 
 func InitMItem() error {
