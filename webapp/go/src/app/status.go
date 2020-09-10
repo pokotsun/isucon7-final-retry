@@ -18,6 +18,7 @@ func GoFuncGetStatus() {
 					err = ws.WriteJSON(status)
 					if err != nil {
 						logger.Error("GoFuncGetStatus WriteJSON", "err", err)
+						logger.Errorf("GoFuncGetStatus WriteJSON errType %T", err)
 						ws.Close()
 					}
 				}
