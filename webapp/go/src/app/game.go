@@ -330,14 +330,14 @@ func getStatus(roomName string) (*GameStatus, error) {
 
 	mItems := M_ITEM_DICT
 	addings := []Adding{}
-	err = tx.Select(&addings, "SELECT time, isu FROM adding WHERE room_name = ? AND time > ?", roomName, currentTime)
+	err = tx.Select(&addings, "SELECT time, isu FROM adding WHERE room_name = ?", roomName)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
 	}
 
 	buyings := []Buying{}
-	err = tx.Select(&buyings, "SELECT item_id, ordinal, time FROM buying WHERE room_name = ? AND time > ?", roomName, currentTime)
+	err = tx.Select(&buyings, "SELECT item_id, ordinal, time FROM buying WHERE room_name = ?", roomName)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
@@ -398,13 +398,17 @@ func calcStatus(roomName string, currentStatus CurrentStatus, mItems map[int]mIt
 	for _, a := range addings {
 		// adding は adding.time に isu を増加させる
 		// 未来のAdding
-		addingAt[a.Time] = a
+		if a.Time <= currentTime {
+			addingAt[a.Time] = a
+		}
 	}
 
 	for _, b := range buyings {
 		// buying は 即座に isu を消費し buying.time からアイテムの効果を発揮する
 		// 未来のBuying
-		buyingAt[b.Time] = append(buyingAt[b.Time], b)
+		if b.Time <= currentTime {
+			buyingAt[b.Time] = append(buyingAt[b.Time], b)
+		}
 	}
 
 	for _, m := range mItems {
