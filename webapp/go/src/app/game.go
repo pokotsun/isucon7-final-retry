@@ -315,7 +315,7 @@ func getStatus(roomName string) (*GameStatus, error) {
 
 	var currentStatus CurrentStatus
 	if currentStatus, err = getCurrentStatusFromCache(roomName); err != nil {
-		logger.Infof("Failed To Get Current Status From Cache: %s", err)
+		logger.Infof("Failed To Get Current Status From Cache: %s, %s", roomName, err)
 		currentStatus, err = initCurrentStatus(roomName, currentTime, tx)
 		if err != nil {
 			tx.Rollback()
