@@ -446,17 +446,17 @@ func serveGameConn(conn *websocket.Conn, roomName string) {
 	logger.Info(conn.RemoteAddr(), "serveGameConn", roomName)
 	defer conn.Close()
 
-	// status, err := getStatus(roomName)
-	// if err != nil {
-	// 	logger.Info(err)
-	// 	return
-	// }
+	status, err := getStatus(roomName)
+	if err != nil {
+		logger.Info(err)
+		return
+	}
 
-	// err = ws.WriteJSON(status)
-	// if err != nil {
-	// 	logger.Info(err)
-	// 	return
-	// }
+	err = ws.WriteJSON(status)
+	if err != nil {
+		logger.Info(err)
+		return
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
