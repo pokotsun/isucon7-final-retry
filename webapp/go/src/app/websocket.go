@@ -35,7 +35,7 @@ func (ws *WS) WriteJSON(v interface{}) error {
 	err := ws.Conn.WriteJSON(v)
 
 	if err != nil && errors.Is(err, syscall.EPIPE) {
-		logger.Errorw("WriteJSON ", "err", err)
+		logger.Infow("WriteJSON ", "err", err)
 		logger.Info("WriteJSON and Close")
 		ws.Close()
 
