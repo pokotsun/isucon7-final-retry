@@ -121,6 +121,8 @@ func main() {
 		logger.Error(err)
 	}
 
+	go GoFuncGetStatus()
+
 	r := mux.NewRouter()
 	r.HandleFunc("/initialize", getInitializeHandler)
 	r.HandleFunc("/room/", getRoomHandler)

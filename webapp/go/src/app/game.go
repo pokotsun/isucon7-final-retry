@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/big"
 	"strconv"
-	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/websocket"
@@ -438,8 +437,14 @@ func calcStatus(currentTime int64, mItems map[int]mItem, addings []Adding, buyin
 	}, nil
 }
 
-func serveGameConn(ws *websocket.Conn, roomName string) {
-	logger.Info(ws.RemoteAddr(), "serveGameConn", roomName)
+func serveGameConn(conn *websocket.Conn, roomName string) {
+	ws := WS{
+		ID:       autoIncrement.FetchID(),
+		RoomName: roomName,
+		Conn:     conn,
+	}
+	AddConn(ws)
+	logger.Info(ws.Conn.RemoteAddr(), "serveGameConn", roomName)
 	defer ws.Close()
 
 	status, err := getStatus(roomName)
@@ -463,7 +468,7 @@ func serveGameConn(ws *websocket.Conn, roomName string) {
 		defer cancel()
 		for {
 			req := GameRequest{}
-			err := ws.ReadJSON(&req)
+			err := ws.Conn.ReadJSON(&req)
 			if err != nil {
 				logger.Info(err)
 				return
@@ -477,8 +482,8 @@ func serveGameConn(ws *websocket.Conn, roomName string) {
 		}
 	}()
 
-	ticker := time.NewTicker(500 * time.Millisecond)
-	defer ticker.Stop()
+	// ticker := time.NewTicker(500 * time.Millisecond)
+	// defer ticker.Stop()
 
 	for {
 		select {
@@ -519,18 +524,18 @@ func serveGameConn(ws *websocket.Conn, roomName string) {
 				logger.Info(err)
 				return
 			}
-		case <-ticker.C:
-			status, err := getStatus(roomName)
-			if err != nil {
-				logger.Info(err)
-				return
-			}
+		// case <-ticker.C:
+		// 	status, err := getStatus(roomName)
+		// 	if err != nil {
+		// 		logger.Info(err)
+		// 		return
+		// 	}
 
-			err = ws.WriteJSON(status)
-			if err != nil {
-				logger.Info(err)
-				return
-			}
+		// 	err = ws.WriteJSON(status)
+		// 	if err != nil {
+		// 		logger.Info(err)
+		// 		return
+		// 	}
 		case <-ctx.Done():
 			return
 		}
