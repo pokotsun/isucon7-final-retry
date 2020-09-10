@@ -412,6 +412,18 @@ func calcStatus(roomName string, currentStatus CurrentStatus, mItems map[int]mIt
 		}
 	}
 
+	itemPowerStr := map[int]string{}
+	for k, v := range itemPower {
+		itemPowerStr[k] = v.String()
+	}
+	currentStatus.TotalMillIsuStr = totalMilliIsu.String()
+	currentStatus.ItemBuilt = itemBuilt
+	currentStatus.ItemBought = itemBought
+	currentStatus.TotalPowerStr = totalPower.String()
+	currentStatus.itemPowerStr = itemPowerStr
+	currentStatus.Time = currentTime
+	setCurrentStatusToCache(roomName, currentStatus)
+
 	schedule := []Schedule{
 		Schedule{
 			Time:       currentTime,
@@ -495,18 +507,6 @@ func calcStatus(roomName string, currentStatus CurrentStatus, mItems map[int]mIt
 			Time:   t,
 		})
 	}
-
-	itemPowerStr := map[int]string{}
-	for k, v := range itemPower {
-		itemPowerStr[k] = v.String()
-	}
-	currentStatus.TotalMillIsuStr = totalMilliIsu.String()
-	currentStatus.ItemBuilt = itemBuilt
-	currentStatus.ItemBought = itemBought
-	currentStatus.TotalPowerStr = totalPower.String()
-	currentStatus.itemPowerStr = itemPowerStr
-	currentStatus.Time = currentTime
-	setCurrentStatusToCache(roomName, currentStatus)
 
 	return &GameStatus{
 		Adding:   gsAdding,
