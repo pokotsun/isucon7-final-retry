@@ -1,8 +1,6 @@
 package main
 
 import (
-	"errors"
-	"syscall"
 	"time"
 )
 
@@ -20,9 +18,9 @@ func GoFuncGetStatus() {
 				}
 				for _, ws := range conns {
 					err = ws.WriteJSON(status)
-					if err != nil && errors.Is(err, syscall.EPIPE) {
-						logger.Error("GoFuncGetStatus WriteJSON", "err", err)
-						ws.Close()
+					if err != nil {
+						logger.Info(err)
+						return
 					}
 				}
 			}()

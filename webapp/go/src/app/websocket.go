@@ -1,7 +1,9 @@
 package main
 
 import (
+	"errors"
 	"sync"
+	"syscall"
 
 	"github.com/gorilla/websocket"
 )
@@ -27,7 +29,17 @@ func AddConn(ws WS) {
 func (ws WS) WriteJSON(v interface{}) error {
 	ws.Mux.Lock()
 	defer ws.Mux.Unlock()
-	return ws.Conn.WriteJSON(v)
+	err := ws.Conn.WriteJSON(v)
+
+	if err != nil && errors.Is(err, syscall.EPIPE) {
+		logger.Errorw("WriteJSON ", "err", err)
+		logger.Info("WriteJSON and Close")
+		ws.Close()
+
+		return nil
+	}
+
+	return err
 }
 
 func (ws WS) Close() {
