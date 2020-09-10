@@ -1,6 +1,10 @@
 package main
 
-import "time"
+import (
+	"errors"
+	"syscall"
+	"time"
+)
 
 func GoFuncGetStatus() {
 	ticker := time.NewTicker(500 * time.Millisecond)
@@ -16,9 +20,8 @@ func GoFuncGetStatus() {
 				}
 				for _, ws := range conns {
 					err = ws.WriteJSON(status)
-					if err != nil {
+					if err != nil && errors.Is(err, syscall.EPIPE) {
 						logger.Error("GoFuncGetStatus WriteJSON", "err", err)
-						logger.Errorf("GoFuncGetStatus WriteJSON errType %T", err)
 						ws.Close()
 					}
 				}
