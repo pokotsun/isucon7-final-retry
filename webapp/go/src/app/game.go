@@ -240,7 +240,7 @@ func buyItem(roomName string, itemID int, countBought int, reqTime int64) bool {
 	return true
 }
 
-func initCurrentStatus(roomName string, currentTime int64, tx *sqlx.Tx) (CurrentStatus, error) {
+func initCurrentStatus(roomName string, currentTime int64, tx *sqlx.Tx) error {
 	currentStatus := CurrentStatus{}
 	mItems := M_ITEM_DICT
 
@@ -248,14 +248,14 @@ func initCurrentStatus(roomName string, currentTime int64, tx *sqlx.Tx) (Current
 	if err := tx.Select(&addings,
 		"SELECT * FROM adding WHERE room_name = ? AND time <= ?",
 		roomName, currentTime); err != nil {
-		return currentStatus, err
+		return err
 	}
 
 	buyings := []Buying{}
 	if err := tx.Select(&buyings,
 		"SELECT item_id, ordinal, time FROM buying WHERE room_name = ? AND time <= ?",
 		roomName, currentTime); err != nil {
-		return currentStatus, err
+		return err
 	}
 
 	// 1ミリ秒に生産できる椅子の単位をミリ椅子とする
@@ -298,7 +298,7 @@ func initCurrentStatus(roomName string, currentTime int64, tx *sqlx.Tx) (Current
 	currentStatus.Time = currentTime
 
 	setCurrentStatusToCache(roomName, currentStatus)
-	return currentStatus, nil
+	return nil
 }
 
 func getStatus(roomName string) (*GameStatus, error) {
@@ -316,11 +316,16 @@ func getStatus(roomName string) (*GameStatus, error) {
 	var currentStatus CurrentStatus
 	if currentStatus, err = getCurrentStatusFromCache(roomName); err != nil {
 		logger.Infof("Failed To Get Current Status From Cache: %s, %s", roomName, err)
-		currentStatus, err = initCurrentStatus(roomName, currentTime, tx)
+		err = initCurrentStatus(roomName, currentTime, tx)
 		if err != nil {
 			tx.Rollback()
-			return nil, fmt.Errorf("Failed To Get CurrentStatus")
+			return nil, fmt.Errorf("Failed Init CurrentStatus")
 		}
+	}
+	if currentStatus, err = getCurrentStatusFromCache(roomName); err != nil {
+		logger.Errorf("そもそもInitしたデータが帰ってきていない: %s", err)
+		tx.Rollback()
+		return nil, fmt.Errorf("Failed Init CurrentStatus")
 	}
 
 	mItems := M_ITEM_DICT
