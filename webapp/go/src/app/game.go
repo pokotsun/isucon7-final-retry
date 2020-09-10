@@ -271,12 +271,19 @@ func getStatus(roomName string) (*GameStatus, error) {
 		return nil, err
 	}
 
+	var addingTotal string
+	err = tx.QueryRow("SELECT IFNULL(SUM(isu),0) FROM adding WHERE room_name = ? AND time <= ? GROUP BY room_name", roomName, currentTime).Scan(&addingTotal)
+	if err != nil && err != sql.ErrNoRows {
+		tx.Rollback()
+		return nil, err
+	}
+
 	err = tx.Commit()
 	if err != nil {
 		return nil, err
 	}
 
-	status, err := calcStatus(roomName, currentTime, mItems, addings, buyings)
+	status, err := calcStatus(addingTotal, currentTime, mItems, addings, buyings)
 	if err != nil {
 		return nil, err
 	}
@@ -291,7 +298,7 @@ func getStatus(roomName string) (*GameStatus, error) {
 	return status, err
 }
 
-func calcStatus(roomName string, currentTime int64, mItems map[int]mItem, addings []Adding, buyings []Buying) (*GameStatus, error) {
+func calcStatus(addingTotal string, currentTime int64, mItems map[int]mItem, addings []Adding, buyings []Buying) (*GameStatus, error) {
 	var (
 		// 1ミリ秒に生産できる椅子の単位をミリ椅子とする
 		totalMilliIsu = big.NewInt(0)
@@ -315,11 +322,6 @@ func calcStatus(roomName string, currentTime int64, mItems map[int]mItem, adding
 		itemBuilding[itemID] = []Building{}
 	}
 
-	var addingTotal string
-	err := db.QueryRow("SELECT IFNULL(SUM(isu),0) FROM adding WHERE room_name = ? AND time <= ? GROUP BY room_name", roomName, currentTime).Scan(&addingTotal)
-	if err != nil && err != sql.ErrNoRows {
-		return nil, err
-	}
 	totalMilliIsu = str2big(addingTotal)
 
 	for _, a := range addings {
