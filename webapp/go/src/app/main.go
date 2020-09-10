@@ -72,7 +72,7 @@ func getInitializeHandler(w http.ResponseWriter, r *http.Request) {
 	db.MustExec("TRUNCATE TABLE room_time")
 	ConnMap = make(map[string]map[int]*WebSocket)
 	for _, address := range PrivateIPs {
-		uri := "http://" + address + "/other_initialize"
+		uri := "http://" + address + ":5000/other_initialize"
 		res, err := http.Get(uri)
 		defer res.Body.Close()
 		if err != nil {
