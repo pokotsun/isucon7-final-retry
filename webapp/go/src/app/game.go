@@ -241,21 +241,21 @@ func buyItem(roomName string, itemID int, countBought int, reqTime int64) bool {
 }
 
 func initCurrentStatus(roomName string, currentTime int64, tx *sqlx.Tx) (CurrentStatus, error) {
-	curTotalMilliIsu := CurrentStatus{}
+	currentStatus := CurrentStatus{}
 	mItems := M_ITEM_DICT
 
 	addings := []Adding{}
 	if err := tx.Select(&addings,
-		"SELECT * FROM adding WHERE room_name = ? AND time <=?",
+		"SELECT * FROM adding WHERE room_name = ? AND time <= ?",
 		roomName, currentTime); err != nil {
-		return curTotalMilliIsu, err
+		return currentStatus, err
 	}
 
 	buyings := []Buying{}
 	if err := tx.Select(&buyings,
 		"SELECT item_id, ordinal, time FROM buying WHERE room_name = ? AND time <= ?",
 		roomName, currentTime); err != nil {
-		return curTotalMilliIsu, err
+		return currentStatus, err
 	}
 
 	// 1ミリ秒に生産できる椅子の単位をミリ椅子とする
@@ -290,13 +290,15 @@ func initCurrentStatus(roomName string, currentTime int64, tx *sqlx.Tx) (Current
 	for k, v := range itemPower {
 		itemPowerStr[k] = v.String()
 	}
-	curTotalMilliIsu.TotalMillIsuStr = totalMilliIsu.String()
-	curTotalMilliIsu.ItemBuilt = itemBuilt
-	curTotalMilliIsu.ItemBought = itemBought
-	curTotalMilliIsu.TotalPowerStr = totalPower.String()
-	curTotalMilliIsu.itemPowerStr = itemPowerStr
+	currentStatus.TotalMillIsuStr = totalMilliIsu.String()
+	currentStatus.ItemBuilt = itemBuilt
+	currentStatus.ItemBought = itemBought
+	currentStatus.TotalPowerStr = totalPower.String()
+	currentStatus.itemPowerStr = itemPowerStr
+	currentStatus.Time = currentTime
 
-	return curTotalMilliIsu, nil
+	setCurrentStatusToCache(roomName, currentStatus)
+	return currentStatus, nil
 }
 
 func getStatus(roomName string) (*GameStatus, error) {
@@ -311,16 +313,26 @@ func getStatus(roomName string) (*GameStatus, error) {
 		return nil, fmt.Errorf("updateRoomTime failure")
 	}
 
+	var currentStatus CurrentStatus
+	if currentStatus, err = getCurrentStatusFromCache(roomName); err != nil {
+		logger.Infof("Failed To Current Status From Cache: %s", err)
+		currentStatus, err = initCurrentStatus(roomName, currentTime, tx)
+		if err != nil {
+			tx.Rollback()
+			return nil, fmt.Errorf("Failed To Get CurrentStatus")
+		}
+	}
+
 	mItems := M_ITEM_DICT
 	addings := []Adding{}
-	err = tx.Select(&addings, "SELECT time, isu FROM adding WHERE room_name = ?", roomName)
+	err = tx.Select(&addings, "SELECT time, isu FROM adding WHERE room_name = ? AND time > ?", roomName, currentTime)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
 	}
 
 	buyings := []Buying{}
-	err = tx.Select(&buyings, "SELECT item_id, ordinal, time FROM buying WHERE room_name = ?", roomName)
+	err = tx.Select(&buyings, "SELECT item_id, ordinal, time FROM buying WHERE room_name = ? AND time > ?", roomName, currentTime)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
@@ -331,7 +343,7 @@ func getStatus(roomName string) (*GameStatus, error) {
 		return nil, err
 	}
 
-	status, err := calcStatus(currentTime, mItems, addings, buyings)
+	status, err := calcStatus(roomName, currentStatus, mItems, addings, buyings)
 	if err != nil {
 		return nil, err
 	}
@@ -346,24 +358,30 @@ func getStatus(roomName string) (*GameStatus, error) {
 	return status, err
 }
 
-func calcStatus(currentTime int64, mItems map[int]mItem, addings []Adding, buyings []Buying) (*GameStatus, error) {
+func calcStatus(roomName string, currentStatus CurrentStatus, mItems map[int]mItem, addings []Adding, buyings []Buying) (*GameStatus, error) {
 	var (
-		// 1ミリ秒に生産できる椅子の単位をミリ椅子とする
-		totalMilliIsu = big.NewInt(0)
-		totalPower    = big.NewInt(0)
+		currentTime = currentStatus.Time
 
-		itemPower    = map[int]*big.Int{}    // ItemID => Power
-		itemPrice    = map[int]*big.Int{}    // ItemID => Price
-		itemOnSale   = map[int]int64{}       // ItemID => OnSale
-		itemBuilt    = map[int]int{}         // ItemID => BuiltCount
-		itemBought   = map[int]int{}         // ItemID => CountBought
-		itemBuilding = map[int][]Building{}  // ItemID => Buildings
-		itemPower0   = map[int]Exponential{} // ItemID => currentTime における Power
-		itemBuilt0   = map[int]int{}         // ItemID => currentTime における BuiltCount
+		// 1ミリ秒に生産できる椅子の単位をミリ椅子とする
+		totalMilliIsu = str2big(currentStatus.TotalMillIsuStr)
+		totalPower    = str2big(currentStatus.TotalPowerStr)
+
+		itemPower    = map[int]*big.Int{}       // ItemID => Power
+		itemPrice    = map[int]*big.Int{}       // ItemID => Price
+		itemOnSale   = map[int]int64{}          // ItemID => OnSale
+		itemBuilt    = currentStatus.ItemBuilt  // ItemID => BuiltCount
+		itemBought   = currentStatus.ItemBought // ItemID => CountBought
+		itemBuilding = map[int][]Building{}     // ItemID => Buildings
+		itemPower0   = map[int]Exponential{}    // ItemID => currentTime における Power
+		itemBuilt0   = map[int]int{}            // ItemID => currentTime における BuiltCount
 
 		addingAt = map[int64]Adding{}   // Time => currentTime より先の Adding
 		buyingAt = map[int64][]Buying{} // Time => currentTime より先の Buying
 	)
+
+	for k, v := range currentStatus.itemPowerStr {
+		itemPower[k] = str2big(v)
+	}
 
 	for itemID := range mItems {
 		itemPower[itemID] = big.NewInt(0)
@@ -372,28 +390,14 @@ func calcStatus(currentTime int64, mItems map[int]mItem, addings []Adding, buyin
 
 	for _, a := range addings {
 		// adding は adding.time に isu を増加させる
-		if a.Time <= currentTime {
-			totalMilliIsu.Add(totalMilliIsu, new(big.Int).Mul(str2big(a.Isu), big.NewInt(1000)))
-		} else { // 未来のAdding
-			addingAt[a.Time] = a
-		}
+		// 未来のAdding
+		addingAt[a.Time] = a
 	}
 
 	for _, b := range buyings {
 		// buying は 即座に isu を消費し buying.time からアイテムの効果を発揮する
-		itemBought[b.ItemID]++
-		m := mItems[b.ItemID]
-		totalMilliIsu.Sub(totalMilliIsu, new(big.Int).Mul(m.GetPrice(b.Ordinal), big.NewInt(1000)))
-
-		if b.Time <= currentTime {
-			itemBuilt[b.ItemID]++
-			power := m.GetPower(itemBought[b.ItemID])
-			totalMilliIsu.Add(totalMilliIsu, new(big.Int).Mul(power, big.NewInt(currentTime-b.Time)))
-			totalPower.Add(totalPower, power)
-			itemPower[b.ItemID].Add(itemPower[b.ItemID], power)
-		} else {
-			buyingAt[b.Time] = append(buyingAt[b.Time], b)
-		}
+		// 未来のBuying
+		buyingAt[b.Time] = append(buyingAt[b.Time], b)
 	}
 
 	for _, m := range mItems {
@@ -489,6 +493,18 @@ func calcStatus(currentTime int64, mItems map[int]mItem, addings []Adding, buyin
 			Time:   t,
 		})
 	}
+
+	itemPowerStr := map[int]string{}
+	for k, v := range itemPower {
+		itemPowerStr[k] = v.String()
+	}
+	currentStatus.TotalMillIsuStr = totalMilliIsu.String()
+	currentStatus.ItemBuilt = itemBuilt
+	currentStatus.ItemBought = itemBought
+	currentStatus.TotalPowerStr = totalPower.String()
+	currentStatus.itemPowerStr = itemPowerStr
+	currentStatus.Time = currentTime
+	setCurrentStatusToCache(roomName, currentStatus)
 
 	return &GameStatus{
 		Adding:   gsAdding,

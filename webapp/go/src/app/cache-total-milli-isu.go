@@ -9,7 +9,7 @@ func getKeyCurrentStatus(roomName string) string {
 	return fmt.Sprintf("CUR_TOTAL_MILISU-rname-%s", roomName)
 }
 
-func setCurrentStatus(roomName string, item CurrentStatus) {
+func setCurrentStatusToCache(roomName string, item CurrentStatus) {
 	key := getKeyCurrentStatus(roomName)
 	v, err := json.Marshal(item)
 	if err != nil {
@@ -21,7 +21,7 @@ func setCurrentStatus(roomName string, item CurrentStatus) {
 	}
 }
 
-func getCurrentStatus(roomName string) (CurrentStatus, error) {
+func getCurrentStatusFromCache(roomName string) (CurrentStatus, error) {
 	key := getKeyCurrentStatus(roomName)
 	bytes, err := cacheClient.SingleGet(key)
 	if err != nil {
