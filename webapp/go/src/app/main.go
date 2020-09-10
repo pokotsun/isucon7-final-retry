@@ -107,6 +107,11 @@ func main() {
 
 	initDB()
 
+	err = InitMItem()
+	if err != nil {
+		logger.Error(err)
+	}
+
 	r := mux.NewRouter()
 	r.HandleFunc("/initialize", getInitializeHandler)
 	r.HandleFunc("/room/", getRoomHandler)
