@@ -32,6 +32,10 @@ func (item *mItem) GetPower(count int) *big.Int {
 }
 
 func (item *mItem) GetPrice(count int) *big.Int {
+	key := item.BuildCacheKeyByCount(count)
+	if v, ok := PRICE_DICT[key]; ok {
+		return v
+	}
 	// price(x):=(cx+1)*d^(ax+b)
 	a := item.Price1
 	b := item.Price2
@@ -41,7 +45,9 @@ func (item *mItem) GetPrice(count int) *big.Int {
 
 	s := big.NewInt(c*x + 1)
 	t := new(big.Int).Exp(big.NewInt(d), big.NewInt(a*x+b), nil)
-	return new(big.Int).Mul(s, t)
+	res := new(big.Int).Mul(s, t)
+	PRICE_DICT[key] = res
+	return res
 }
 
 func str2big(s string) *big.Int {

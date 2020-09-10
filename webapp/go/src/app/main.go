@@ -70,6 +70,7 @@ func getInitializeHandler(w http.ResponseWriter, r *http.Request) {
 	for i := 0; i < 25; i++ {
 		for _, item := range M_ITEM_DICT {
 			item.GetPower(i)
+			item.GetPrice(i)
 		}
 	}
 

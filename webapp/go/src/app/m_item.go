@@ -10,6 +10,7 @@ var (
 	M_ITEM_DICT map[int]mItem
 
 	POWER_DICT = make(map[string]*big.Int)
+	PRICE_DICT = make(map[string]*big.Int)
 )
 
 func InitMItem() error {
