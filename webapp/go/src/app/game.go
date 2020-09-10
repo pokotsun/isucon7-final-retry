@@ -323,6 +323,7 @@ func calcStatus(addingTotal string, currentTime int64, mItems map[int]mItem, add
 	}
 
 	totalMilliIsu = str2big(addingTotal)
+	totalMilliIsu.Add(totalMilliIsu, new(big.Int).Mul(totalMilliIsu, big.NewInt(1000)))
 
 	for _, a := range addings {
 		// adding は adding.time に isu を増加させる
