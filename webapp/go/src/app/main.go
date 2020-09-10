@@ -139,5 +139,15 @@ func main() {
 	r.HandleFunc("/ws/{room_name}", wsGameHandler)
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("../public/")))
 
+	go func() {
+		ticker := time.NewTicker(1 * time.Minute)
+		for {
+			<-ticker.C
+			logger.Infow("DEBUG",
+				"POWER_DICT", POWER_DICT,
+			)
+		}
+	}()
+
 	log.Fatal(http.ListenAndServe(":5000", handlers.LoggingHandler(os.Stderr, r)))
 }
