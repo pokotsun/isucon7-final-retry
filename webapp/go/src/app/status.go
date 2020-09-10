@@ -10,6 +10,7 @@ func GoFuncGetStatus() {
 		<-ticker.C
 
 		for roomName, conns := range connMap {
+			logger.Infow("GoFuncGetStatus", "conns", conns)
 			go func() {
 				status, err := getStatus(roomName)
 				if err != nil {
