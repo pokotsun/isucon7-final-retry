@@ -126,6 +126,10 @@ func updateRoomTime(tx *sqlx.Tx, roomName string, reqTime int64) (int64, bool) {
 	return currentTime, true
 }
 
+var (
+	curAddingRoomNames 
+)
+
 func addIsu(roomName string, reqIsu *big.Int, reqTime int64) bool {
 	tx, err := db.Beginx()
 	if err != nil {
