@@ -90,7 +90,11 @@ type mItem struct {
 	Price4 int64 `db:"price4"`
 }
 
-type CurrentTotalMillIsu struct {
-	TotalMillIsu string `json:"total_mill_isu"`
-	Time         int64  `json:"time"`
+type CurrentStatus struct {
+	TotalMillIsuStr string      `json:"total_mill_isu"`
+	Time            int64       `json:"time"`
+	ItemBuilt       map[int]int `json:"item_built"`  // ItemID => BuiltCount
+	ItemBought      map[int]int `json:"item_bought"` // ItemID => CountBought
+	TotalPowerStr   string      `json:"total_power_str"`
+	itemPowerStr    map[int]string
 }

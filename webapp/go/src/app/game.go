@@ -240,6 +240,65 @@ func buyItem(roomName string, itemID int, countBought int, reqTime int64) bool {
 	return true
 }
 
+func initCurrentStatus(roomName string, currentTime int64, tx *sqlx.Tx) (CurrentStatus, error) {
+	curTotalMilliIsu := CurrentStatus{}
+	mItems := M_ITEM_DICT
+
+	addings := []Adding{}
+	if err := tx.Select(&addings,
+		"SELECT * FROM adding WHERE room_name = ? AND time <=?",
+		roomName, currentTime); err != nil {
+		return curTotalMilliIsu, err
+	}
+
+	buyings := []Buying{}
+	if err := tx.Select(&buyings,
+		"SELECT item_id, ordinal, time FROM buying WHERE room_name = ? AND time <= ?",
+		roomName, currentTime); err != nil {
+		return curTotalMilliIsu, err
+	}
+
+	// 1ミリ秒に生産できる椅子の単位をミリ椅子とする
+	totalMilliIsu := big.NewInt(0)
+
+	itemBuilt := map[int]int{}  // ItemID => BuiltCount
+	itemBought := map[int]int{} // ItemID => CountBought
+	totalPower := big.NewInt(0)
+	itemPower := map[int]*big.Int{} // ItemID => Power
+
+	for _, a := range addings {
+		// adding は adding.time に isu を増加させる
+		// 現在時刻で行う処理
+		totalMilliIsu.Add(totalMilliIsu, new(big.Int).Mul(str2big(a.Isu), big.NewInt(1000)))
+	}
+
+	for _, b := range buyings {
+		// buying は 即座に isu を消費し buying.time からアイテムの効果を発揮する
+		itemBought[b.ItemID]++
+		m := mItems[b.ItemID]
+		totalMilliIsu.Sub(totalMilliIsu, new(big.Int).Mul(m.GetPrice(b.Ordinal), big.NewInt(1000)))
+
+		// 現在時刻で行う処理
+		itemBuilt[b.ItemID]++
+		power := m.GetPower(itemBought[b.ItemID])
+		totalMilliIsu.Add(totalMilliIsu, new(big.Int).Mul(power, big.NewInt(currentTime-b.Time)))
+		totalPower.Add(totalPower, power)
+		itemPower[b.ItemID].Add(itemPower[b.ItemID], power)
+	}
+
+	itemPowerStr := map[int]string{}
+	for k, v := range itemPower {
+		itemPowerStr[k] = v.String()
+	}
+	curTotalMilliIsu.TotalMillIsuStr = totalMilliIsu.String()
+	curTotalMilliIsu.ItemBuilt = itemBuilt
+	curTotalMilliIsu.ItemBought = itemBought
+	curTotalMilliIsu.TotalPowerStr = totalPower.String()
+	curTotalMilliIsu.itemPowerStr = itemPowerStr
+
+	return curTotalMilliIsu, nil
+}
+
 func getStatus(roomName string) (*GameStatus, error) {
 	tx, err := db.Beginx()
 	if err != nil {
