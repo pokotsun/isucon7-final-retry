@@ -246,15 +246,15 @@ func initCurrentStatus(roomName string, currentTime int64, tx *sqlx.Tx) error {
 
 	addings := []Adding{}
 	if err := tx.Select(&addings,
-		"SELECT * FROM adding WHERE room_name = ? AND time <= ?",
-		roomName, currentTime); err != nil {
+		"SELECT * FROM adding WHERE room_name = ?",
+		roomName); err != nil {
 		return err
 	}
 
 	buyings := []Buying{}
 	if err := tx.Select(&buyings,
-		"SELECT item_id, ordinal, time FROM buying WHERE room_name = ? AND time <= ?",
-		roomName, currentTime); err != nil {
+		"SELECT item_id, ordinal, time FROM buying WHERE room_name = ?",
+		roomName); err != nil {
 		return err
 	}
 
@@ -269,7 +269,9 @@ func initCurrentStatus(roomName string, currentTime int64, tx *sqlx.Tx) error {
 	for _, a := range addings {
 		// adding は adding.time に isu を増加させる
 		// 現在時刻で行う処理
-		totalMilliIsu.Add(totalMilliIsu, new(big.Int).Mul(str2big(a.Isu), big.NewInt(1000)))
+		if a.Time <= currentTime {
+			totalMilliIsu.Add(totalMilliIsu, new(big.Int).Mul(str2big(a.Isu), big.NewInt(1000)))
+		}
 	}
 
 	for _, b := range buyings {
@@ -279,11 +281,13 @@ func initCurrentStatus(roomName string, currentTime int64, tx *sqlx.Tx) error {
 		totalMilliIsu.Sub(totalMilliIsu, new(big.Int).Mul(m.GetPrice(b.Ordinal), big.NewInt(1000)))
 
 		// 現在時刻で行う処理
-		itemBuilt[b.ItemID]++
-		power := m.GetPower(itemBought[b.ItemID])
-		totalMilliIsu.Add(totalMilliIsu, new(big.Int).Mul(power, big.NewInt(currentTime-b.Time)))
-		totalPower.Add(totalPower, power)
-		itemPower[b.ItemID].Add(itemPower[b.ItemID], power)
+		if b.Time <= currentTime {
+			itemBuilt[b.ItemID]++
+			power := m.GetPower(itemBought[b.ItemID])
+			totalMilliIsu.Add(totalMilliIsu, new(big.Int).Mul(power, big.NewInt(currentTime-b.Time)))
+			totalPower.Add(totalPower, power)
+			itemPower[b.ItemID].Add(itemPower[b.ItemID], power)
+		}
 	}
 
 	itemPowerStr := map[int]string{}
@@ -398,7 +402,7 @@ func calcStatus(roomName string, currentStatus CurrentStatus, mItems map[int]mIt
 	for _, a := range addings {
 		// adding は adding.time に isu を増加させる
 		// 未来のAdding
-		if a.Time <= currentTime {
+		if a.Time > currentTime {
 			addingAt[a.Time] = a
 		}
 	}
@@ -406,7 +410,7 @@ func calcStatus(roomName string, currentStatus CurrentStatus, mItems map[int]mIt
 	for _, b := range buyings {
 		// buying は 即座に isu を消費し buying.time からアイテムの効果を発揮する
 		// 未来のBuying
-		if b.Time <= currentTime {
+		if b.Time > currentTime {
 			buyingAt[b.Time] = append(buyingAt[b.Time], b)
 		}
 	}
