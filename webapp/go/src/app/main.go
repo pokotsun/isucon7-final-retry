@@ -13,10 +13,12 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
+	"go.uber.org/zap"
 )
 
 var (
-	db *sqlx.DB
+	db     *sqlx.DB
+	logger *zap.SugaredLogger
 )
 
 func initDB() {
@@ -51,7 +53,8 @@ func initDB() {
 		time.Sleep(time.Second * 3)
 	}
 
-	db.SetMaxOpenConns(20)
+	db.SetMaxOpenConns(50)
+	db.SetMaxIdleConns(50)
 	db.SetConnMaxLifetime(5 * time.Minute)
 	log.Printf("Succeeded to connect db.")
 }
@@ -93,7 +96,15 @@ func wsGameHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	l, err := zap.NewDevelopment()
+	if err != nil {
+		panic(err)
+	}
+	defer l.Sync()
+	logger = l.Sugar()
+
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
 	initDB()
 
 	r := mux.NewRouter()
