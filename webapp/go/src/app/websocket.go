@@ -19,17 +19,17 @@ type WS struct {
 }
 
 var (
-	connMap = make(map[string]map[int]WS)
+	connMap = make(map[string]map[int]*WS)
 )
 
-func AddConn(ws WS) {
+func AddConn(ws *WS) {
 	if _, ok := connMap[ws.RoomName]; !ok {
-		connMap[ws.RoomName] = make(map[int]WS)
+		connMap[ws.RoomName] = make(map[int]*WS)
 	}
 	connMap[ws.RoomName][ws.ID] = ws
 }
 
-func (ws WS) WriteJSON(v interface{}) error {
+func (ws *WS) WriteJSON(v interface{}) error {
 	ws.Mux.Lock()
 	defer ws.Mux.Unlock()
 	err := ws.Conn.WriteJSON(v)
@@ -45,7 +45,7 @@ func (ws WS) WriteJSON(v interface{}) error {
 	return err
 }
 
-func (ws WS) Close() {
+func (ws *WS) Close() {
 	ws.Conn.Close()
 	delete(connMap[ws.RoomName], ws.ID)
 	ws.cancelFunc()

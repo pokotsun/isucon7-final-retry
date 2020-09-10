@@ -441,7 +441,7 @@ func serveGameConn(conn *websocket.Conn, roomName string) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	ws := WS{
+	ws := &WS{
 		ID:         autoIncrement.FetchID(),
 		RoomName:   roomName,
 		Conn:       conn,
