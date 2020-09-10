@@ -438,10 +438,14 @@ func calcStatus(currentTime int64, mItems map[int]mItem, addings []Adding, buyin
 }
 
 func serveGameConn(conn *websocket.Conn, roomName string) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	ws := WS{
-		ID:       autoIncrement.FetchID(),
-		RoomName: roomName,
-		Conn:     conn,
+		ID:         autoIncrement.FetchID(),
+		RoomName:   roomName,
+		Conn:       conn,
+		cancelFunc: cancel,
 	}
 	AddConn(ws)
 	logger.Info(ws.Conn.RemoteAddr(), "serveGameConn", roomName)
@@ -459,9 +463,6 @@ func serveGameConn(conn *websocket.Conn, roomName string) {
 		return
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	chReq := make(chan GameRequest)
 
 	go func() {
@@ -478,8 +479,6 @@ func serveGameConn(conn *websocket.Conn, roomName string) {
 			case chReq <- req:
 			case <-ctx.Done():
 				return
-			case <-ws.CloseChannel:
-				cancel()
 			}
 		}
 	}()

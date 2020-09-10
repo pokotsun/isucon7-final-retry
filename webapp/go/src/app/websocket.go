@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"sync"
 	"syscall"
@@ -14,7 +15,7 @@ type WS struct {
 	Conn     *websocket.Conn
 	Mux      sync.Mutex
 
-	CloseChannel chan int8
+	cancelFunc context.CancelFunc
 }
 
 var (
@@ -47,5 +48,5 @@ func (ws WS) WriteJSON(v interface{}) error {
 func (ws WS) Close() {
 	ws.Conn.Close()
 	delete(connMap[ws.RoomName], ws.ID)
-	ws.CloseChannel <- 1
+	ws.cancelFunc()
 }
