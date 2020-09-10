@@ -333,7 +333,7 @@ func calcStatus(addingTotal string, currentTime int64, mItems map[int]mItem, add
 		}
 	}
 
-	logger.Infow("msg", "total", total, "totalMilliIsu", totalMilliIsu)
+	logger.Infow("msg", "addingTotal", addingTotal, "total", total, "totalMilliIsu", totalMilliIsu)
 
 	for _, b := range buyings {
 		// buying は 即座に isu を消費し buying.time からアイテムの効果を発揮する
