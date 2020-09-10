@@ -7,6 +7,7 @@ import (
 )
 
 func GoFuncGetStatus(roomName string) {
+	// ここもしかしたらバグ生むかも
 	if len(ConnMap[roomName]) > 1 {
 		return
 	}
