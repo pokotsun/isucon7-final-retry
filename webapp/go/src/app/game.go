@@ -478,6 +478,8 @@ func serveGameConn(conn *websocket.Conn, roomName string) {
 			case chReq <- req:
 			case <-ctx.Done():
 				return
+			case <-ws.CloseChannel:
+				cancel()
 			}
 		}
 	}()

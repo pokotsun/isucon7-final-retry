@@ -13,6 +13,8 @@ type WS struct {
 	RoomName string
 	Conn     *websocket.Conn
 	Mux      sync.Mutex
+
+	CloseChannel chan int8
 }
 
 var (
@@ -45,4 +47,5 @@ func (ws WS) WriteJSON(v interface{}) error {
 func (ws WS) Close() {
 	ws.Conn.Close()
 	delete(connMap[ws.RoomName], ws.ID)
+	ws.CloseChannel <- 1
 }
