@@ -67,13 +67,6 @@ func getInitializeHandler(w http.ResponseWriter, r *http.Request) {
 	for _, v := range GoRouineFuncMap {
 		v.Channel <- 1
 	}
-	for i := 0; i < 25; i++ {
-		for _, item := range M_ITEM_DICT {
-			item.GetPower(i)
-			item.GetPrice(i)
-		}
-	}
-
 	w.WriteHeader(204)
 }
 
@@ -130,6 +123,12 @@ func main() {
 	err = InitMItem()
 	if err != nil {
 		logger.Error(err)
+	}
+	for i := 0; i < 50; i++ {
+		for _, item := range M_ITEM_DICT {
+			item.GetPower(i)
+			item.GetPrice(i)
+		}
 	}
 
 	r := mux.NewRouter()
