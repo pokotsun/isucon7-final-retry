@@ -67,6 +67,12 @@ func getInitializeHandler(w http.ResponseWriter, r *http.Request) {
 	for _, v := range GoRouineFuncMap {
 		v.Channel <- 1
 	}
+	for i := 0; i < 25; i++ {
+		for _, item := range M_ITEM_DICT {
+			item.GetPower(i)
+			item.GetPrice(i)
+		}
+	}
 
 	w.WriteHeader(204)
 }
@@ -133,6 +139,18 @@ func main() {
 	r.HandleFunc("/ws/", wsGameHandler)
 	r.HandleFunc("/ws/{room_name}", wsGameHandler)
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("../public/")))
+
+	go func() {
+		ticker := time.NewTicker(2 * time.Minute)
+		for {
+			<-ticker.C
+			for key, _ := range POWER_DICT {
+				logger.Infow("DEBUG",
+					"POWER_DICT key", key,
+				)
+			}
+		}
+	}()
 
 	log.Fatal(http.ListenAndServe(":5000", handlers.LoggingHandler(os.Stderr, r)))
 }
