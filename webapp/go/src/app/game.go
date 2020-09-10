@@ -330,11 +330,12 @@ func calcStatus(currentTime int64, mItems map[int]mItem, addings []Adding, buyin
 	for _, a := range addings {
 		// adding は adding.time に isu を増加させる
 		if a.Time <= currentTime {
-			totalMilliIsu.Add(totalMilliIsu, new(big.Int).Mul(str2big(a.Isu), big.NewInt(1000)))
+			totalMilliIsu.Add(totalMilliIsu, str2big(a.Isu))
 		} else {
 			addingAt[a.Time] = a
 		}
 	}
+	totalMilliIsu.Mul(totalMilliIsu, big.NewInt(1000))
 
 	for _, b := range buyings {
 		// buying は 即座に isu を消費し buying.time からアイテムの効果を発揮する
