@@ -127,7 +127,7 @@ func wsGameHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	l, err := zap.NewDevelopment()
+	l, err := zap.NewProduction()
 	if err != nil {
 		panic(err)
 	}
