@@ -127,16 +127,15 @@ func addIsu(roomName string, reqIsu *big.Int, reqTime int64) bool {
 	}
 
 	res, err := tx.Exec("INSERT INTO adding(room_name, time, isu) VALUES (?, ?, ?)", roomName, reqTime, reqIsu.String())
-	rows, _ := res.RowsAffected()
-	if rows == 1 {
-		if err := tx.Commit(); err != nil {
-			logger.Info(err)
-			return false
+	if err == nil {
+		rows, _ := res.RowsAffected()
+		if rows == 1 {
+			if err := tx.Commit(); err != nil {
+				logger.Info(err)
+				return false
+			}
+			return true
 		}
-		return true
-	}
-	if err != nil {
-		logger.Infow("addIsu Insert Error", "err", err)
 	}
 
 	var isuStr string
