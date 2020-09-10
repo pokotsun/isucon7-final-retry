@@ -451,17 +451,17 @@ func serveGameConn(conn *websocket.Conn, roomName string) {
 	logger.Info(ws.Conn.RemoteAddr(), "serveGameConn", roomName)
 	defer ws.Close()
 
-	status, err := getStatus(roomName)
-	if err != nil {
-		logger.Info(err)
-		return
-	}
+	// status, err := getStatus(roomName)
+	// if err != nil {
+	// 	logger.Info(err)
+	// 	return
+	// }
 
-	err = ws.WriteJSON(status)
-	if err != nil {
-		logger.Info(err)
-		return
-	}
+	// err = ws.WriteJSON(status)
+	// if err != nil {
+	// 	logger.Info(err)
+	// 	return
+	// }
 
 	chReq := make(chan GameRequest)
 
