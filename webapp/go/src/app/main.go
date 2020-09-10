@@ -63,6 +63,11 @@ func getInitializeHandler(w http.ResponseWriter, r *http.Request) {
 	db.MustExec("TRUNCATE TABLE adding")
 	db.MustExec("TRUNCATE TABLE buying")
 	db.MustExec("TRUNCATE TABLE room_time")
+	ConnMap = make(map[string]map[int]*WebSocket)
+	for _, v := range GoRouineFuncMap {
+		v.Channel <- 1
+	}
+
 	w.WriteHeader(204)
 }
 
