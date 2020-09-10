@@ -315,7 +315,7 @@ func getStatus(roomName string) (*GameStatus, error) {
 
 	var currentStatus CurrentStatus
 	if currentStatus, err = getCurrentStatusFromCache(roomName); err != nil {
-		logger.Infof("Failed To Current Status From Cache: %s", err)
+		logger.Infof("Failed To Get Current Status From Cache: %s", err)
 		currentStatus, err = initCurrentStatus(roomName, currentTime, tx)
 		if err != nil {
 			tx.Rollback()
@@ -378,6 +378,8 @@ func calcStatus(roomName string, currentStatus CurrentStatus, mItems map[int]mIt
 		addingAt = map[int64]Adding{}   // Time => currentTime より先の Adding
 		buyingAt = map[int64][]Buying{} // Time => currentTime より先の Buying
 	)
+
+	logger.Infow("CALC_STATUS", "curStatus", currentStatus)
 
 	for k, v := range currentStatus.itemPowerStr {
 		itemPower[k] = str2big(v)
