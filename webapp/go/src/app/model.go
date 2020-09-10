@@ -91,10 +91,10 @@ type mItem struct {
 }
 
 type CurrentStatus struct {
-	TotalMillIsuStr string      `json:"total_mill_isu"`
-	Time            int64       `json:"time"`
-	ItemBuilt       map[int]int `json:"item_built"`  // ItemID => BuiltCount
-	ItemBought      map[int]int `json:"item_bought"` // ItemID => CountBought
-	TotalPowerStr   string      `json:"total_power_str"`
-	itemPowerStr    map[int]string
+	TotalMillIsuStr string         `json:"total_mill_isu"`
+	Time            int64          `json:"time"`
+	ItemBuilt       map[int]int    `json:"item_built"`  // ItemID => BuiltCount
+	ItemBought      map[int]int    `json:"item_bought"` // ItemID => CountBought
+	TotalPowerStr   string         `json:"total_power_str"`
+	itemPowerStr    map[int]string `json:"item_power_str"`
 }

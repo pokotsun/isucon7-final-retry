@@ -404,14 +404,26 @@ func calcStatus(roomName string, currentStatus CurrentStatus, mItems map[int]mIt
 		// 未来のAdding
 		if a.Time > currentTime {
 			addingAt[a.Time] = a
+		} else {
+			totalMilliIsu.Add(totalMilliIsu, new(big.Int).Mul(str2big(a.Isu), big.NewInt(1000)))
 		}
 	}
 
 	for _, b := range buyings {
 		// buying は 即座に isu を消費し buying.time からアイテムの効果を発揮する
+		itemBought[b.ItemID]++
+		m := mItems[b.ItemID]
+		totalMilliIsu.Sub(totalMilliIsu, new(big.Int).Mul(m.GetPrice(b.Ordinal), big.NewInt(1000)))
+
 		// 未来のBuying
 		if b.Time > currentTime {
 			buyingAt[b.Time] = append(buyingAt[b.Time], b)
+		} else {
+			itemBuilt[b.ItemID]++
+			power := m.GetPower(itemBought[b.ItemID])
+			totalMilliIsu.Add(totalMilliIsu, new(big.Int).Mul(power, big.NewInt(currentTime-b.Time)))
+			totalPower.Add(totalPower, power)
+			itemPower[b.ItemID].Add(itemPower[b.ItemID], power)
 		}
 	}
 
