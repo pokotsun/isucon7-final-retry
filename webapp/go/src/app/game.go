@@ -438,9 +438,14 @@ func calcStatus(currentTime int64, mItems map[int]mItem, addings []Adding, buyin
 	}, nil
 }
 
-func serveGameConn(ws *websocket.Conn, roomName string) {
-	logger.Info(ws.RemoteAddr(), "serveGameConn", roomName)
-	defer ws.Close()
+func serveGameConn(conn *websocket.Conn, roomName string) {
+	ws := BuildWebSocket(roomName, conn)
+	AppendConn(ws)
+
+	go GoFuncGetStatus(roomName)
+
+	logger.Info(conn.RemoteAddr(), "serveGameConn", roomName)
+	defer conn.Close()
 
 	status, err := getStatus(roomName)
 	if err != nil {
@@ -448,7 +453,7 @@ func serveGameConn(ws *websocket.Conn, roomName string) {
 		return
 	}
 
-	err = ws.WriteJSON(status)
+	err = conn.WriteJSON(status)
 	if err != nil {
 		logger.Info(err)
 		return
@@ -463,7 +468,7 @@ func serveGameConn(ws *websocket.Conn, roomName string) {
 		defer cancel()
 		for {
 			req := GameRequest{}
-			err := ws.ReadJSON(&req)
+			err := conn.ReadJSON(&req)
 			if err != nil {
 				logger.Info(err)
 				return
@@ -504,14 +509,14 @@ func serveGameConn(ws *websocket.Conn, roomName string) {
 					return
 				}
 
-				err = ws.WriteJSON(status)
+				err = conn.WriteJSON(status)
 				if err != nil {
 					logger.Info(err)
 					return
 				}
 			}
 
-			err := ws.WriteJSON(GameResponse{
+			err := conn.WriteJSON(GameResponse{
 				RequestID: req.RequestID,
 				IsSuccess: success,
 			})
@@ -526,7 +531,7 @@ func serveGameConn(ws *websocket.Conn, roomName string) {
 				return
 			}
 
-			err = ws.WriteJSON(status)
+			err = conn.WriteJSON(status)
 			if err != nil {
 				logger.Info(err)
 				return
