@@ -17,6 +17,7 @@ func GoFuncGetStatus() {
 				for _, ws := range conns {
 					err = ws.WriteJSON(status)
 					if err != nil {
+						logger.Error("GoFuncGetStatus WriteJSON", "err", err)
 						ws.Close()
 					}
 				}
