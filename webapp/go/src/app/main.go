@@ -19,6 +19,8 @@ import (
 var (
 	db     *sqlx.DB
 	logger *zap.SugaredLogger
+
+	cacheClient *redisClient
 )
 
 func initDB() {

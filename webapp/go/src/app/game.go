@@ -275,7 +275,7 @@ func getStatus(roomName string) (*GameStatus, error) {
 		return nil, err
 	}
 
-	status, err := calcStatus(currentTime, mItems, addings, buyings)
+	status, err := calcStatus(roomName, currentTime, mItems, addings, buyings)
 	if err != nil {
 		return nil, err
 	}
@@ -290,7 +290,7 @@ func getStatus(roomName string) (*GameStatus, error) {
 	return status, err
 }
 
-func calcStatus(currentTime int64, mItems map[int]mItem, addings []Adding, buyings []Buying) (*GameStatus, error) {
+func calcStatus(roomName string, currentTime int64, mItems map[int]mItem, addings []Adding, buyings []Buying) (*GameStatus, error) {
 	var (
 		// 1ミリ秒に生産できる椅子の単位をミリ椅子とする
 		totalMilliIsu = big.NewInt(0)
@@ -314,10 +314,17 @@ func calcStatus(currentTime int64, mItems map[int]mItem, addings []Adding, buyin
 		itemBuilding[itemID] = []Building{}
 	}
 
+	var addingTotal int64
+	err := db.QueryRow("SELECT isu FROM adding WHERE room_name = ? AND time <= ? GROUP BY room_name", roomName, currentTime).Scan(&addingTotal)
+	if err != nil {
+		return nil, err
+	}
+	totalMilliIsu = big.NewInt(addingTotal)
+
 	for _, a := range addings {
 		// adding は adding.time に isu を増加させる
 		if a.Time <= currentTime {
-			totalMilliIsu.Add(totalMilliIsu, new(big.Int).Mul(str2big(a.Isu), big.NewInt(1000)))
+			// totalMilliIsu.Add(totalMilliIsu, new(big.Int).Mul(str2big(a.Isu), big.NewInt(1000)))
 		} else {
 			addingAt[a.Time] = a
 		}
