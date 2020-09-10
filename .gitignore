@@ -1,0 +1,8 @@
+*.swp
+/webapp/go/pkg
+/webapp/perl/
+/webapp/php/
+/webapp/nodejs/
+/portal/
+/bench/
+
