@@ -75,14 +75,14 @@ func getCurrentTime() (int64, error) {
 // 状態になることに注意 (keyword: MVCC, repeatable read).
 func updateRoomTime(tx *sqlx.Tx, roomName string, reqTime int64) (int64, bool) {
 	// See page 13 and 17 in https://www.slideshare.net/ichirin2501/insert-51938787
-	_, err := tx.Exec("INSERT INTO room_time(room_name, time) VALUES (?, 0) ON DUPLICATE KEY UPDATE time = time", roomName)
-	if err != nil {
-		logger.Info(err)
-		return 0, false
-	}
+	// _, err := tx.Exec("INSERT INTO room_time(room_name, time) VALUES (?, 0) ON DUPLICATE KEY UPDATE time = time", roomName)
+	// if err != nil {
+	// 	logger.Info(err)
+	// 	return 0, false
+	// }
 
 	var roomTime int64
-	err = tx.Get(&roomTime, "SELECT time FROM room_time WHERE room_name = ? FOR UPDATE", roomName)
+	err := tx.Get(&roomTime, "SELECT time FROM room_time WHERE room_name = ? FOR UPDATE", roomName)
 	if err != nil {
 		logger.Info(err)
 		return 0, false

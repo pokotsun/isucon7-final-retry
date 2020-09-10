@@ -72,6 +72,15 @@ func getRoomHandler(w http.ResponseWriter, r *http.Request) {
 	roomName := vars["room_name"]
 	path := "/ws/" + url.PathEscape(roomName)
 
+	var i int
+	err := db.QueryRow("SELECT 1 FROM room_time WHERE room_name = ?", roomName).Scan(&i)
+	if err != nil {
+		logger.Infow("SELECT ERROR", "err", err)
+	}
+	if i != 1 {
+		db.Exec("INSERT INTO room_time(room_name, time) VALUES (?, 0)", roomName)
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(struct {
 		Host string `json:"host"`
