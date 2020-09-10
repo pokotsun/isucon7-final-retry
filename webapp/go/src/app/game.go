@@ -338,11 +338,12 @@ func calcStatus(currentTime int64, mItems map[int]mItem, addings []Adding, buyin
 	}
 	totalMilliIsu.Mul(totalMilliIsu, big.NewInt(1000))
 
+	tmpTotalMilliIsu := big.NewInt(0)
 	for _, b := range buyings {
 		// buying は 即座に isu を消費し buying.time からアイテムの効果を発揮する
 		itemBought[b.ItemID]++
 		m := mItems[b.ItemID]
-		totalMilliIsu.Sub(totalMilliIsu, new(big.Int).Mul(m.GetPrice(b.Ordinal), big.NewInt(1000)))
+		tmpTotalMilliIsu.Sub(tmpTotalMilliIsu, m.GetPrice(b.Ordinal))
 
 		if b.Time <= currentTime {
 			itemBuilt[b.ItemID]++
@@ -354,6 +355,7 @@ func calcStatus(currentTime int64, mItems map[int]mItem, addings []Adding, buyin
 			buyingAt[b.Time] = append(buyingAt[b.Time], b)
 		}
 	}
+	totalMilliIsu.Sub(totalMilliIsu, tmpTotalMilliIsu.Mul(tmpTotalMilliIsu, big.NewInt(1000)))
 
 	for _, m := range mItems {
 		itemPower0[m.ItemID] = big2exp(itemPower[m.ItemID])
