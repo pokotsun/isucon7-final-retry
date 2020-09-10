@@ -1,8 +1,15 @@
 package main
 
+import (
+	"fmt"
+	"math/big"
+)
+
 var (
 	// M_ITEM_ARRAY []mItem
 	M_ITEM_DICT map[int]mItem
+
+	POWER_DICT map[string]*big.Int
 )
 
 func InitMItem() error {
@@ -22,4 +29,8 @@ func InitMItem() error {
 func FetchMItem(itemID int) mItem {
 	item, _ := M_ITEM_DICT[itemID]
 	return item
+}
+
+func (item *mItem) BuildCacheKeyByCount(count int) string {
+	return fmt.Sprintf("%d-%d", item.ItemID, count)
 }
