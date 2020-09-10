@@ -17,8 +17,9 @@ import (
 )
 
 var (
-	db     *sqlx.DB
-	logger *zap.SugaredLogger
+	db          *sqlx.DB
+	logger      *zap.SugaredLogger
+	cacheClient *redisClient
 )
 
 func initDB() {
@@ -106,6 +107,7 @@ func main() {
 	// log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	initDB()
+	cacheClient = NewRedis("tcp", "127.0.0.1:6379")
 
 	err = InitMItem()
 	if err != nil {

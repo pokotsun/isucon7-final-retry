@@ -89,3 +89,8 @@ type mItem struct {
 	Price3 int64 `db:"price3"`
 	Price4 int64 `db:"price4"`
 }
+
+type CurrentTotalMillIsu struct {
+	TotalMillIsu string `json:"total_mill_isu"`
+	Time         int64  `json:"time"`
+}

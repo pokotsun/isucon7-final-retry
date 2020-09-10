@@ -215,6 +215,7 @@ func buyItem(roomName string, itemID int, countBought int, reqTime int64) bool {
 		}
 	}
 
+	// 現在
 	var item mItem
 	item = FetchMItem(itemID)
 	need := new(big.Int).Mul(item.GetPrice(countBought+1), big.NewInt(1000))
@@ -314,7 +315,7 @@ func calcStatus(currentTime int64, mItems map[int]mItem, addings []Adding, buyin
 		// adding は adding.time に isu を増加させる
 		if a.Time <= currentTime {
 			totalMilliIsu.Add(totalMilliIsu, new(big.Int).Mul(str2big(a.Isu), big.NewInt(1000)))
-		} else {
+		} else { // 未来のAdding
 			addingAt[a.Time] = a
 		}
 	}
