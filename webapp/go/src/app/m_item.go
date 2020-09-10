@@ -1,8 +1,8 @@
 package main
 
 var (
-	M_ITEM_ARRAY []mItem
-	M_ITEM_DICT  map[int]mItem
+	// M_ITEM_ARRAY []mItem
+	M_ITEM_DICT map[int]mItem
 )
 
 func InitMItem() error {
@@ -11,10 +11,15 @@ func InitMItem() error {
 	if err != nil {
 		return err
 	}
-	M_ITEM_ARRAY = items
+	// M_ITEM_ARRAY = items
 	M_ITEM_DICT = make(map[int]mItem)
 	for _, v := range items {
 		M_ITEM_DICT[v.ItemID] = v
 	}
 	return nil
+}
+
+func FetchMItem(itemID int) mItem {
+	item, _ := M_ITEM_DICT[itemID]
+	return item
 }
