@@ -141,12 +141,14 @@ func main() {
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("../public/")))
 
 	go func() {
-		ticker := time.NewTicker(1 * time.Minute)
+		ticker := time.NewTicker(2 * time.Minute)
 		for {
 			<-ticker.C
-			logger.Infow("DEBUG",
-				"POWER_DICT", POWER_DICT,
-			)
+			for key, _ := range POWER_DICT {
+				logger.Infow("DEBUG",
+					"POWER_DICT key", key,
+				)
+			}
 		}
 	}()
 
