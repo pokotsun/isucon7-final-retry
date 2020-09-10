@@ -322,7 +322,7 @@ func calcStatus(addingTotal string, currentTime int64, mItems map[int]mItem, add
 		itemBuilding[itemID] = []Building{}
 	}
 
-	total := new(big.Int).Mul(str2big(addingTotal), big.NewInt(1000))
+	total := str2big(addingTotal)
 
 	for _, a := range addings {
 		// adding は adding.time に isu を増加させる
