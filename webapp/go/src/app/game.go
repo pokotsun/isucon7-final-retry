@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/big"
 	"strconv"
-	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/websocket"
@@ -75,14 +74,14 @@ func getCurrentTime() (int64, error) {
 // 状態になることに注意 (keyword: MVCC, repeatable read).
 func updateRoomTime(tx *sqlx.Tx, roomName string, reqTime int64) (int64, bool) {
 	// See page 13 and 17 in https://www.slideshare.net/ichirin2501/insert-51938787
-	_, err := tx.Exec("INSERT INTO room_time(room_name, time) VALUES (?, 0) ON DUPLICATE KEY UPDATE time = time", roomName)
-	if err != nil {
-		logger.Info(err)
-		return 0, false
-	}
+	// _, err := tx.Exec("INSERT INTO room_time(room_name, time) VALUES (?, 0) ON DUPLICATE KEY UPDATE time = time", roomName)
+	// if err != nil {
+	// 	logger.Info(err)
+	// 	return 0, false
+	// }
 
 	var roomTime int64
-	err = tx.Get(&roomTime, "SELECT time FROM room_time WHERE room_name = ? FOR UPDATE", roomName)
+	err := tx.Get(&roomTime, "SELECT time FROM room_time WHERE room_name = ? FOR UPDATE", roomName)
 	if err != nil {
 		logger.Info(err)
 		return 0, false
@@ -127,11 +126,16 @@ func addIsu(roomName string, reqIsu *big.Int, reqTime int64) bool {
 		return false
 	}
 
-	_, err = tx.Exec("INSERT INTO adding(room_name, time, isu) VALUES (?, ?, '0') ON DUPLICATE KEY UPDATE isu=isu", roomName, reqTime)
-	if err != nil {
-		logger.Info(err)
-		tx.Rollback()
-		return false
+	res, err := tx.Exec("INSERT INTO adding(room_name, time, isu) VALUES (?, ?, ?)", roomName, reqTime, reqIsu.String())
+	if err == nil {
+		rows, _ := res.RowsAffected()
+		if rows == 1 {
+			if err := tx.Commit(); err != nil {
+				logger.Info(err)
+				return false
+			}
+			return true
+		}
 	}
 
 	var isuStr string
@@ -438,9 +442,14 @@ func calcStatus(currentTime int64, mItems map[int]mItem, addings []Adding, buyin
 	}, nil
 }
 
-func serveGameConn(ws *websocket.Conn, roomName string) {
-	logger.Info(ws.RemoteAddr(), "serveGameConn", roomName)
-	defer ws.Close()
+func serveGameConn(conn *websocket.Conn, roomName string) {
+	ws := BuildWebSocket(roomName, conn)
+	AppendConn(ws)
+
+	go GoFuncGetStatus(roomName)
+
+	logger.Info(conn.RemoteAddr(), "serveGameConn", roomName)
+	defer conn.Close()
 
 	status, err := getStatus(roomName)
 	if err != nil {
@@ -463,7 +472,7 @@ func serveGameConn(ws *websocket.Conn, roomName string) {
 		defer cancel()
 		for {
 			req := GameRequest{}
-			err := ws.ReadJSON(&req)
+			err := conn.ReadJSON(&req)
 			if err != nil {
 				logger.Info(err)
 				return
@@ -477,8 +486,8 @@ func serveGameConn(ws *websocket.Conn, roomName string) {
 		}
 	}()
 
-	ticker := time.NewTicker(500 * time.Millisecond)
-	defer ticker.Stop()
+	// ticker := time.NewTicker(500 * time.Millisecond)
+	// defer ticker.Stop()
 
 	for {
 		select {
@@ -519,18 +528,18 @@ func serveGameConn(ws *websocket.Conn, roomName string) {
 				logger.Info(err)
 				return
 			}
-		case <-ticker.C:
-			status, err := getStatus(roomName)
-			if err != nil {
-				logger.Info(err)
-				return
-			}
+		// case <-ticker.C:
+		// 	status, err := getStatus(roomName)
+		// 	if err != nil {
+		// 		logger.Info(err)
+		// 		return
+		// 	}
 
-			err = ws.WriteJSON(status)
-			if err != nil {
-				logger.Info(err)
-				return
-			}
+		// 	err = conn.WriteJSON(status)
+		// 	if err != nil {
+		// 		logger.Info(err)
+		// 		return
+		// 	}
 		case <-ctx.Done():
 			return
 		}
