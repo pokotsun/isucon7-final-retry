@@ -315,12 +315,12 @@ func calcStatus(roomName string, currentTime int64, mItems map[int]mItem, adding
 		itemBuilding[itemID] = []Building{}
 	}
 
-	var addingTotal int64
+	var addingTotal string
 	err := db.QueryRow("SELECT IFNULL(SUM(isu),0) FROM adding WHERE room_name = ? AND time <= ? GROUP BY room_name", roomName, currentTime).Scan(&addingTotal)
 	if err != nil && err != sql.ErrNoRows {
 		return nil, err
 	}
-	totalMilliIsu = big.NewInt(addingTotal)
+	totalMilliIsu = str2big(addingTotal)
 
 	for _, a := range addings {
 		// adding は adding.time に isu を増加させる
