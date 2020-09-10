@@ -315,7 +315,7 @@ func calcStatus(roomName string, currentTime int64, mItems map[int]mItem, adding
 	}
 
 	var addingTotal int64
-	err := db.QueryRow("SELECT SUM(isu) FROM adding WHERE room_name = ? AND time <= ? GROUP BY room_name", roomName, currentTime).Scan(&addingTotal)
+	err := db.QueryRow("SELECT IFNULL(SUM(isu),0) FROM adding WHERE room_name = ? AND time <= ? GROUP BY room_name", roomName, currentTime).Scan(&addingTotal)
 	if err != nil {
 		return nil, err
 	}
