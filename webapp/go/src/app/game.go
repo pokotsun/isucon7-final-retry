@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/big"
 	"strconv"
-	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/websocket"
@@ -482,8 +481,8 @@ func serveGameConn(conn *websocket.Conn, roomName string) {
 		}
 	}()
 
-	ticker := time.NewTicker(500 * time.Millisecond)
-	defer ticker.Stop()
+	// ticker := time.NewTicker(500 * time.Millisecond)
+	// defer ticker.Stop()
 
 	for {
 		select {
@@ -524,18 +523,18 @@ func serveGameConn(conn *websocket.Conn, roomName string) {
 				logger.Info(err)
 				return
 			}
-		case <-ticker.C:
-			status, err := getStatus(roomName)
-			if err != nil {
-				logger.Info(err)
-				return
-			}
+		// case <-ticker.C:
+		// 	status, err := getStatus(roomName)
+		// 	if err != nil {
+		// 		logger.Info(err)
+		// 		return
+		// 	}
 
-			err = conn.WriteJSON(status)
-			if err != nil {
-				logger.Info(err)
-				return
-			}
+		// 	err = conn.WriteJSON(status)
+		// 	if err != nil {
+		// 		logger.Info(err)
+		// 		return
+		// 	}
 		case <-ctx.Done():
 			return
 		}
