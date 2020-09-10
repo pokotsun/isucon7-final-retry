@@ -357,7 +357,7 @@ func calcStatus(currentTime int64, mItems map[int]mItem, addings []Adding, buyin
 	}
 	totalMilliIsu.Add(totalMilliIsu, tmpTotalMilliIsu.Mul(tmpTotalMilliIsu, big.NewInt(1000)))
 
-	tmpTotalMilliIsu = totalMilliIsu.Div(totalMilliIsu, big.NewInt(1000))
+	tmpTotalMilliIsu = new(big.Int).Div(totalMilliIsu, big.NewInt(1000))
 	for _, m := range mItems {
 		itemPower0[m.ItemID] = big2exp(itemPower[m.ItemID])
 		itemBuilt0[m.ItemID] = itemBuilt[m.ItemID]
