@@ -13,10 +13,12 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
+	"go.uber.org/zap"
 )
 
 var (
-	db *sqlx.DB
+	db     *sqlx.DB
+	logger *zap.SugaredLogger
 )
 
 func initDB() {
@@ -40,20 +42,21 @@ func initDB() {
 	dsn := fmt.Sprintf("%s%s@tcp(%s:%s)/isudb?parseTime=true&loc=Local&charset=utf8mb4",
 		db_user, db_password, db_host, db_port)
 
-	log.Printf("Connecting to db: %q", dsn)
+	logger.Infof("Connecting to db: %q", dsn)
 	db, _ = sqlx.Connect("mysql", dsn)
 	for {
 		err := db.Ping()
 		if err == nil {
 			break
 		}
-		log.Println(err)
+		logger.Info(err)
 		time.Sleep(time.Second * 3)
 	}
 
-	db.SetMaxOpenConns(20)
+	db.SetMaxOpenConns(50)
+	db.SetMaxIdleConns(50)
 	db.SetConnMaxLifetime(5 * time.Minute)
-	log.Printf("Succeeded to connect db.")
+	logger.Info("Succeeded to connect db.")
 }
 
 func getInitializeHandler(w http.ResponseWriter, r *http.Request) {
@@ -86,14 +89,22 @@ func wsGameHandler(w http.ResponseWriter, r *http.Request) {
 
 	ws, err := websocket.Upgrade(w, r, nil, 1024, 1024)
 	if _, ok := err.(websocket.HandshakeError); ok {
-		log.Println("Failed to upgrade", err)
+		logger.Info("Failed to upgrade", err)
 		return
 	}
 	go serveGameConn(ws, roomName)
 }
 
 func main() {
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	l, err := zap.NewDevelopment()
+	if err != nil {
+		panic(err)
+	}
+	defer l.Sync()
+	logger = l.Sugar()
+
+	// log.SetFlags(log.LstdFlags | log.Lshortfile)
+
 	initDB()
 
 	r := mux.NewRouter()
