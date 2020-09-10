@@ -19,6 +19,13 @@ import (
 var (
 	db     *sqlx.DB
 	logger *zap.SugaredLogger
+
+	PrivateIPs = []string{
+		"10.174.0.11",
+		"10.174.0.13",
+		"10.174.0.15",
+		"10.174.0.14",
+	}
 )
 
 func initDB() {
@@ -64,10 +71,21 @@ func getInitializeHandler(w http.ResponseWriter, r *http.Request) {
 	db.MustExec("TRUNCATE TABLE buying")
 	db.MustExec("TRUNCATE TABLE room_time")
 	ConnMap = make(map[string]map[int]*WebSocket)
+	for _, address := range PrivateIPs {
+		uri := "http://" + address + "/other_initialize"
+		res, err := http.Get(uri)
+		defer res.Body.Close()
+		if err != nil {
+			logger.Info(err)
+		}
+	}
+	w.WriteHeader(204)
+}
+func getOtherInitializeHandler(w http.ResponseWriter, r *http.Request) {
+	ConnMap = make(map[string]map[int]*WebSocket)
 	for _, v := range GoRouineFuncMap {
 		v.Channel <- 1
 	}
-	w.WriteHeader(204)
 }
 
 func getRoomHandler(w http.ResponseWriter, r *http.Request) {
@@ -137,6 +155,7 @@ func main() {
 	r.HandleFunc("/room/{room_name}", getRoomHandler)
 	r.HandleFunc("/ws/", wsGameHandler)
 	r.HandleFunc("/ws/{room_name}", wsGameHandler)
+	r.HandleFunc("/other_initialize", getOtherInitializeHandler)
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("../public/")))
 
 	go func() {
