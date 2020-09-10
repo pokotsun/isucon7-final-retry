@@ -364,7 +364,7 @@ func calcStatus(currentTime int64, mItems map[int]mItem, addings []Adding, buyin
 		itemBuilt0[m.ItemID] = itemBuilt[m.ItemID]
 		price := m.GetPrice(itemBought[m.ItemID] + 1)
 		itemPrice[m.ItemID] = price
-		itemPriceMilliIsu[m.ItemID] = new(big.Int).Div(price, big.NewInt(1000))
+		itemPriceMilliIsu[m.ItemID] = new(big.Int).Mul(price, big.NewInt(1000))
 		if 0 <= tmpTotalMilliIsu.Cmp(price) {
 			itemOnSale[m.ItemID] = 0 // 0 は 時刻 currentTime で購入可能であることを表す
 		}
