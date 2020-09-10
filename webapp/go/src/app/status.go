@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+	"syscall"
 	"time"
 )
 
@@ -18,8 +20,9 @@ func GoFuncGetStatus(roomName string) {
 		}
 		for _, ws := range ConnMap[roomName] {
 			err = ws.WriteJSON(status)
-			if err != nil {
+			if err != nil && errors.Is(err, syscall.EPIPE) {
 				logger.Infow("GoFuncGetStatus", "err", err)
+				delete(ConnMap[roomName], ws.ID)
 			}
 		}
 	}
