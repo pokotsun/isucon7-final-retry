@@ -355,7 +355,7 @@ func calcStatus(currentTime int64, mItems map[int]mItem, addings []Adding, buyin
 			buyingAt[b.Time] = append(buyingAt[b.Time], b)
 		}
 	}
-	totalMilliIsu.Sub(totalMilliIsu, tmpTotalMilliIsu.Mul(tmpTotalMilliIsu, big.NewInt(1000)))
+	totalMilliIsu.Add(totalMilliIsu, tmpTotalMilliIsu.Mul(tmpTotalMilliIsu, big.NewInt(1000)))
 
 	for _, m := range mItems {
 		itemPower0[m.ItemID] = big2exp(itemPower[m.ItemID])
