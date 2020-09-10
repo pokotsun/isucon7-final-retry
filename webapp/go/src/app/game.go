@@ -452,7 +452,7 @@ func serveGameConn(conn *websocket.Conn, roomName string) {
 		return
 	}
 
-	err = conn.WriteJSON(status)
+	err = ws.WriteJSON(status)
 	if err != nil {
 		logger.Info(err)
 		return
@@ -508,14 +508,14 @@ func serveGameConn(conn *websocket.Conn, roomName string) {
 					return
 				}
 
-				err = conn.WriteJSON(status)
+				err = ws.WriteJSON(status)
 				if err != nil {
 					logger.Info(err)
 					return
 				}
 			}
 
-			err := conn.WriteJSON(GameResponse{
+			err := ws.WriteJSON(GameResponse{
 				RequestID: req.RequestID,
 				IsSuccess: success,
 			})

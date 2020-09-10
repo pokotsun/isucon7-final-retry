@@ -1,12 +1,17 @@
 package main
 
-import "github.com/gorilla/websocket"
+import (
+	"sync"
+
+	"github.com/gorilla/websocket"
+)
 
 type WebSocket struct {
 	ID       int
 	RoomName string
 
 	Conn *websocket.Conn
+	Mux  sync.Mutex
 }
 
 var (
@@ -30,5 +35,7 @@ func AppendConn(ws *WebSocket) {
 }
 
 func (ws *WebSocket) WriteJSON(v interface{}) error {
+	ws.Mux.Lock()
+	defer ws.Mux.Unlock()
 	return ws.Conn.WriteJSON(v)
 }
